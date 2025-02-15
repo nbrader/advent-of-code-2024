@@ -22,9 +22,44 @@
 
 module Main (main) where
 
-import AsciiWorld (AsciiWorld(), emptyAsciiWorld)
+import Data.Maybe
+
+import AsciiWorld
+import WalkableWorld
+
+data KeyType = Original | Part Int deriving (Show, Eq, Ord)
+keyTypeToMaybe Original   = Nothing
+keyTypeToMaybe (Part x) = Just x
+maybeToKeyType Nothing  = Original
+maybeToKeyType (Just x) = Part x
+isOriginal = isNothing . keyTypeToMaybe
+isPart = isJust . keyTypeToMaybe
+getPartNum = fromJust . keyTypeToMaybe
+
+data Key k = Key {keyType :: KeyType, keyValue :: k} deriving (Show, Eq, Ord)
 
 main :: IO ()
 main = do
-  print $ (emptyAsciiWorld 10 :: AsciiWorld Int Int)
-  putStrLn "hello world"
+    contents <- readFile "input/day15 (data).csv"
+    
+    let initWorld :: WalkableWorld (Key Char) (Key Char)
+        initWorld = readWorld (Just . WKMask . Key Original) contents
+        height = wwHeight initWorld
+        asciiWorld = wwRawAsciiWorld initWorld
+    
+    let
+        bgChar :: Char
+        bgChar = '.'
+        
+        maskToChar :: (Key Char) -> Char
+        maskToChar (Key Original c) = c
+        maskToChar (Key (Part n) c) = c
+        
+        pointsToChar :: (Key Char) -> Char
+        pointsToChar (Key Original c) = c
+        pointsToChar (Key (Part n) c) = c
+        
+        nameZOrder :: WorldKey (Key Char) (Key Char) -> WorldKey (Key Char) (Key Char) -> Ordering
+        nameZOrder = compare
+        
+     in printWorld bgChar maskToChar pointsToChar nameZOrder initWorld
