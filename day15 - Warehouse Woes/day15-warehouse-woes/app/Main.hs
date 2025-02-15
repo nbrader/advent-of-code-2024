@@ -23,6 +23,7 @@
 module Main (main) where
 
 import Data.Maybe
+import Data.List.Split
 
 import AsciiWorld
 import WalkableWorld
@@ -42,8 +43,10 @@ main :: IO ()
 main = do
     contents <- readFile "input/day15 (data).csv"
     
-    let initWorld :: WalkableWorld (Key Char) (Key Char)
-        initWorld = readWorld (Just . WKMask . Key Original) contents
+    let [worldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
+        
+        initWorld :: WalkableWorld (Key Char) (Key Char)
+        initWorld = readWorld (Just . WKMask . Key Original) worldStr
         height = wwHeight initWorld
         asciiWorld = wwRawAsciiWorld initWorld
     
@@ -63,3 +66,5 @@ main = do
         nameZOrder = compare
         
      in printWorld bgChar maskToChar pointsToChar nameZOrder initWorld
+    
+    putStrLn . concat . lines $ instructionsStr
