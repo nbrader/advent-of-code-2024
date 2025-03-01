@@ -26,6 +26,7 @@ import Data.Maybe
 import Data.Tuple
 import Data.Function
 import Data.Bifunctor
+import Data.List
 import Data.List.Split
 import qualified Data.Map as M
 
@@ -79,7 +80,18 @@ main = do
     printWorld bgChar (toChar . WKMask) (toChar . WKPoints) nameZOrder initWorld
     printRawAsciiWorld bgChar (toChar . WKMask . fromExternal1) (toChar . WKPoints . fromExternal2) nameZOrder' initWorld
     
-    putStrLn . concat . lines $ instructionsStr
+    let instrs = concat . lines $ instructionsStr
+    putStrLn instrs
+    
+    let resultingWorlds = foldl' (\ws@(w:_) c -> moveBotByChar w c:ws) [initWorld] instrs
+    
+    mapM_ (printWorld bgChar (toChar . WKMask) (toChar . WKPoints) nameZOrder) (reverse resultingWorlds)
+
+moveBotByChar :: WalkableWorld MaskType PointsType -> Char -> WalkableWorld MaskType PointsType
+moveBotByChar w '>' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (1,0)) w
+moveBotByChar w '<' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (-1,0)) w
+moveBotByChar w '^' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,1)) w
+moveBotByChar w 'v' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,-1)) w
 
 fromExternal1 :: Ext_Int MaskType WWMaskKey -> MaskType
 fromExternal1 (External x) = x
