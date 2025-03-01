@@ -33,8 +33,8 @@ import qualified Data.Map as M
 import AsciiWorld
 import WalkableWorld
 
-data MaskObj   = Box | Wall deriving (Show, Eq, Ord)
-data PointsObj = Robot      deriving (Show, Eq, Ord)
+data MaskObj   = Wall        deriving (Show, Eq, Ord)
+data PointsObj = Robot | Box deriving (Show, Eq, Ord)
 
 main :: IO ()
 main = do
@@ -45,7 +45,7 @@ main = do
         charAssoc :: [(Char, WorldKey MaskObj PointsObj)]
         charAssoc =
             [   ('@', PointsKey Robot),
-                ('O', MaskKey Box),
+                ('O', PointsKey Box),
                 ('#', MaskKey Wall)
             ]
         
@@ -80,8 +80,9 @@ main = do
     mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
 
 moveBotByVecInWorld :: (Int, Int) -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
-moveBotByVecInWorld vec world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot vec world hitWall
-  where hitWall world' = inWWIsPointsKeyOverlappingMaskKey world' Robot Wall
+moveBotByVecInWorld vec initWorld = case movePointsKeyByVecPushingPointsKeyBlockedByMaskKeysInWW Robot vec Box [Wall] initWorld of
+    Just w' -> w'
+    Nothing -> initWorld
 
 moveVecFromChar '>' = (1,0)
 moveVecFromChar '<' = (-1,0)
