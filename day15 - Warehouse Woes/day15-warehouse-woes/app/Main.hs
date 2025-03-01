@@ -87,19 +87,14 @@ main = do
     
     mapM_ (printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder) (reverse resultingWorlds)
 
-moveBotByCharFreelyInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
-moveBotByCharFreelyInWorld '>' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (1,0)) w
-moveBotByCharFreelyInWorld '<' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (-1,0)) w
-moveBotByCharFreelyInWorld '^' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,1)) w
-moveBotByCharFreelyInWorld 'v' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,-1)) w
-
 moveBotByCharInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
-moveBotByCharInWorld c w
-    | inWorldIsPointsKeyOverlappingMaskKey (wwRawAsciiWorld worldF) (External Robot) (External Wall)
-        = w
-    | otherwise
-        = worldF
-  where worldF = moveBotByCharFreelyInWorld c w
+moveBotByCharInWorld c world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot (moveVecFromChar c) world hitWall
+  where hitWall world' = inWorldIsPointsKeyOverlappingMaskKey (wwRawAsciiWorld world') (External Robot) (External Wall)
+
+moveVecFromChar '>' = (1,0)
+moveVecFromChar '<' = (-1,0)
+moveVecFromChar '^' = (0,1)
+moveVecFromChar 'v' = (0,-1)
 
 fromExternal1 :: Ext_Int MaskType WWMaskKey -> MaskType
 fromExternal1 (External x) = x
