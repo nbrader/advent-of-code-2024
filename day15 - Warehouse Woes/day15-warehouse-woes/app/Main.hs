@@ -71,10 +71,11 @@ main = do
     
     let instrs = concat . lines $ instructionsStr
     putStrLn instrs
+    putStrLn ""
     
     let resultingWorlds = foldl' (\ws@(w:_) c -> (moveBotByCharInWorld c w):ws) [initWorld] instrs
     
-    mapM_ (printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder) (reverse resultingWorlds)
+    mapM_ (\(instr, world) -> putStrLn (instr : []) >> printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
 
 moveBotByCharInWorld :: Char -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
 moveBotByCharInWorld c world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot (moveVecFromChar c) world hitWall
