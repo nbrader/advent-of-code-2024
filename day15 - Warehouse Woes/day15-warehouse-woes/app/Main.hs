@@ -47,9 +47,9 @@ main = do
         
         charAssoc :: [(Char, WorldKey MaskType PointsType)]
         charAssoc =
-            [   ('@', WKPoints Robot),
-                ('O', WKMask Box),
-                ('#', WKMask Wall)
+            [   ('@', PointsKey Robot),
+                ('O', MaskKey Box),
+                ('#', MaskKey Wall)
             ]
         
         fromCharMap = M.fromList charAssoc
@@ -77,15 +77,15 @@ main = do
         conversion = toWorldKey . bimap fromExternal1 fromExternal2 . fromWorldKey
     
     print initWorld
-    printWorld bgChar (toChar . WKMask) (toChar . WKPoints) nameZOrder initWorld
-    printRawAsciiWorld bgChar (toChar . WKMask . fromExternal1) (toChar . WKPoints . fromExternal2) nameZOrder' initWorld
+    printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder initWorld
+    printRawAsciiWorld bgChar (toChar . MaskKey . fromExternal1) (toChar . PointsKey . fromExternal2) nameZOrder' initWorld
     
     let instrs = concat . lines $ instructionsStr
     putStrLn instrs
     
     let resultingWorlds = foldl' (\ws@(w:_) c -> (moveBotByCharInWorld c w):ws) [initWorld] instrs
     
-    mapM_ (printWorld bgChar (toChar . WKMask) (toChar . WKPoints) nameZOrder) (reverse resultingWorlds)
+    mapM_ (printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder) (reverse resultingWorlds)
 
 moveBotByCharFreelyInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
 moveBotByCharFreelyInWorld '>' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (1,0)) w
