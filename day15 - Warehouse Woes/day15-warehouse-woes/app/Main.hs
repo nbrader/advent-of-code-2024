@@ -70,15 +70,16 @@ main = do
     printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder initWorld
     
     let instrs = concat . lines $ instructionsStr
+        vecs = map moveVecFromChar instrs
     putStrLn instrs
     putStrLn ""
     
-    let resultingWorlds = foldl' (\ws@(w:_) c -> (moveBotByCharInWorld c w):ws) [initWorld] instrs
+    let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld v w):ws) [initWorld] vecs
     
     mapM_ (\(instr, world) -> putStrLn (instr : []) >> printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
 
-moveBotByCharInWorld :: Char -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
-moveBotByCharInWorld c world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot (moveVecFromChar c) world hitWall
+moveBotByVecInWorld :: (Int, Int) -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
+moveBotByVecInWorld vec world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot vec world hitWall
   where hitWall world' = inWWIsPointsKeyOverlappingMaskKey world' Robot Wall
 
 moveVecFromChar '>' = (1,0)
