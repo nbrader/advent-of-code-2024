@@ -33,11 +33,8 @@ import qualified Data.Map as M
 import AsciiWorld
 import WalkableWorld
 
-data MaskType  = Box | Wall
-    deriving (Show, Eq, Ord)
-
-data PointsType = Robot
-    deriving (Show, Eq, Ord)
+data MaskType   = Box | Wall deriving (Show, Eq, Ord)
+data PointsType = Robot      deriving (Show, Eq, Ord)
 
 main :: IO ()
 main = do
