@@ -33,10 +33,10 @@ import qualified Data.Map as M
 import AsciiWorld
 import WalkableWorld
 
-data MaskType  = Box | Wall | InternalMaskType
+data MaskType  = Box | Wall
     deriving (Show, Eq, Ord)
 
-data PointsType = Robot | InternalPointsType
+data PointsType = Robot
     deriving (Show, Eq, Ord)
 
 main :: IO ()
@@ -69,16 +69,9 @@ main = do
         
         nameZOrder :: WorldKey MaskType PointsType -> WorldKey MaskType PointsType -> Ordering
         nameZOrder = compare
-        
-        nameZOrder' :: WorldKey (Ext_Int MaskType WWMaskKey) (Ext_Int PointsType WWPointsKey) -> WorldKey (Ext_Int MaskType WWMaskKey) (Ext_Int PointsType WWPointsKey) -> Ordering
-        nameZOrder' = nameZOrder `on` conversion
-        
-        conversion :: WorldKey (Ext_Int MaskType WWMaskKey) (Ext_Int PointsType WWPointsKey) -> WorldKey MaskType PointsType
-        conversion = toWorldKey . bimap fromExternal1 fromExternal2 . fromWorldKey
     
     print initWorld
     printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder initWorld
-    printRawAsciiWorld bgChar (toChar . MaskKey . fromExternal1) (toChar . PointsKey . fromExternal2) nameZOrder' initWorld
     
     let instrs = concat . lines $ instructionsStr
     putStrLn instrs
@@ -89,17 +82,9 @@ main = do
 
 moveBotByCharInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
 moveBotByCharInWorld c world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot (moveVecFromChar c) world hitWall
-  where hitWall world' = inWorldIsPointsKeyOverlappingMaskKey (wwRawAsciiWorld world') (External Robot) (External Wall)
+  where hitWall world' = inWWIsPointsKeyOverlappingMaskKey world' Robot Wall
 
 moveVecFromChar '>' = (1,0)
 moveVecFromChar '<' = (-1,0)
 moveVecFromChar '^' = (0,1)
 moveVecFromChar 'v' = (0,-1)
-
-fromExternal1 :: Ext_Int MaskType WWMaskKey -> MaskType
-fromExternal1 (External x) = x
-fromExternal1 (Internal y) = InternalMaskType
-
-fromExternal2 :: Ext_Int PointsType WWPointsKey -> PointsType
-fromExternal2 (External x) = x
-fromExternal2 (Internal y) = InternalPointsType
