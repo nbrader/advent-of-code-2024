@@ -83,15 +83,23 @@ main = do
     let instrs = concat . lines $ instructionsStr
     putStrLn instrs
     
-    let resultingWorlds = foldl' (\ws@(w:_) c -> moveBotByChar w c:ws) [initWorld] instrs
+    let resultingWorlds = foldl' (\ws@(w:_) c -> (moveBotByCharInWorld c w):ws) [initWorld] instrs
     
     mapM_ (printWorld bgChar (toChar . WKMask) (toChar . WKPoints) nameZOrder) (reverse resultingWorlds)
 
-moveBotByChar :: WalkableWorld MaskType PointsType -> Char -> WalkableWorld MaskType PointsType
-moveBotByChar w '>' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (1,0)) w
-moveBotByChar w '<' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (-1,0)) w
-moveBotByChar w '^' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,1)) w
-moveBotByChar w 'v' = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,-1)) w
+moveBotByCharFreelyInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
+moveBotByCharFreelyInWorld '>' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (1,0)) w
+moveBotByCharFreelyInWorld '<' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (-1,0)) w
+moveBotByCharFreelyInWorld '^' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,1)) w
+moveBotByCharFreelyInWorld 'v' w = modifyRawAsciiWorld (movePointsOfNameBy (External Robot) (0,-1)) w
+
+moveBotByCharInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
+moveBotByCharInWorld c w
+    | inWorldIsPointsKeyOverlappingMaskKey (wwRawAsciiWorld worldF) (External Robot) (External Wall)
+        = w
+    | otherwise
+        = worldF
+  where worldF = moveBotByCharFreelyInWorld c w
 
 fromExternal1 :: Ext_Int MaskType WWMaskKey -> MaskType
 fromExternal1 (External x) = x
