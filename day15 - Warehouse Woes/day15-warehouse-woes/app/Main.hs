@@ -33,8 +33,8 @@ import qualified Data.Map as M
 import AsciiWorld
 import WalkableWorld
 
-data MaskType   = Box | Wall deriving (Show, Eq, Ord)
-data PointsType = Robot      deriving (Show, Eq, Ord)
+data MaskObj   = Box | Wall deriving (Show, Eq, Ord)
+data PointsObj = Robot      deriving (Show, Eq, Ord)
 
 main :: IO ()
 main = do
@@ -42,29 +42,32 @@ main = do
     
     let [worldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
-        charAssoc :: [(Char, WorldKey MaskType PointsType)]
+        charAssoc :: [(Char, WorldKey MaskObj PointsObj)]
         charAssoc =
             [   ('@', PointsKey Robot),
                 ('O', MaskKey Box),
                 ('#', MaskKey Wall)
             ]
         
+        fromCharMap :: M.Map Char (WorldKey MaskObj PointsObj)
         fromCharMap = M.fromList charAssoc
+        
+        toCharMap :: M.Map (WorldKey MaskObj PointsObj) Char
         toCharMap = M.fromList (map swap charAssoc)
         
-        fromChar :: Char -> Maybe (WorldKey MaskType PointsType)
+        fromChar :: Char -> Maybe (WorldKey MaskObj PointsObj)
         fromChar = flip M.lookup fromCharMap
         
-        toChar :: WorldKey MaskType PointsType -> Char
+        toChar :: WorldKey MaskObj PointsObj -> Char
         toChar = fromMaybe 'I' . flip M.lookup toCharMap
         
-        initWorld :: WalkableWorld MaskType PointsType
+        initWorld :: WalkableWorld MaskObj PointsObj
         initWorld = readWorld fromChar worldStr
         
         bgChar :: Char
         bgChar = '.'
         
-        nameZOrder :: WorldKey MaskType PointsType -> WorldKey MaskType PointsType -> Ordering
+        nameZOrder :: WorldKey MaskObj PointsObj -> WorldKey MaskObj PointsObj -> Ordering
         nameZOrder = compare
     
     print initWorld
@@ -77,7 +80,7 @@ main = do
     
     mapM_ (printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder) (reverse resultingWorlds)
 
-moveBotByCharInWorld :: Char -> WalkableWorld MaskType PointsType -> WalkableWorld MaskType PointsType
+moveBotByCharInWorld :: Char -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
 moveBotByCharInWorld c world = movePointsKeyByVecInWWUnlessNewWorldSatisfiesPred Robot (moveVecFromChar c) world hitWall
   where hitWall world' = inWWIsPointsKeyOverlappingMaskKey world' Robot Wall
 
