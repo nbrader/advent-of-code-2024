@@ -15,7 +15,7 @@
 -- Output --
 ------------
 -- *Main> day15part1
--- 
+-- 1451928
 
 -- *Main> day15part2
 -- 
