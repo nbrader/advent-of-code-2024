@@ -38,7 +38,7 @@ data PointsObj = Robot | Box deriving (Show, Eq, Ord)
 
 main :: IO ()
 main = do
-    contents <- readFile "input/day15 (example).csv"
+    contents <- readFile "input/day15 (data).csv"
     
     let [worldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
@@ -66,18 +66,27 @@ main = do
         nameZOrder :: WorldKey MaskObj PointsObj -> WorldKey MaskObj PointsObj -> Ordering
         nameZOrder = compare
     
-    print initWorld
-    printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder initWorld
+    -- print initWorld
+    -- printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder initWorld
     
     let instrChars = concat . lines $ instructionsStr
         instrs = map (:[]) instrChars
         vecs = map moveVecFromChar instrChars
-    putStrLn instrChars
-    putStrLn ""
+    -- putStrLn instrChars
+    -- putStrLn ""
     
-    let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld v w):ws) [initWorld] vecs
+    -- let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld v w):ws) [initWorld] vecs
+    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
     
-    mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    let resultingWorld = foldl' (\w v -> moveBotByVecInWorld v w) initWorld vecs
+    
+    print $ sum $ gpsOfAllBoxes resultingWorld
+
+gpsOfPoint width height (x,y) = x + 100 * (height - 1 - y)
+gpsOfAllBoxes world = map (gpsOfPoint w h) boxPoints
+  where (Just boxPoints) = lookupPointsInWW Box world
+        w = wwWidth world
+        h = wwHeight world
 
 moveBotByVecInWorld :: (Int, Int) -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
 moveBotByVecInWorld vec initWorld = case movePointsKeyByVecPushingPointsKeyBlockedByMaskKeysInWW Robot vec Box [Wall] initWorld of
