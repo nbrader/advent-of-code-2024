@@ -42,18 +42,18 @@ main = do
     
     let [worldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
-        charAssoc :: [(Char, WorldKey MaskObj PointsObj)]
+        charAssoc :: [(Char, MaskOrPointsIndex MaskObj PointsObj)]
         charAssoc =
-            [   ('@', PointsKey Robot),
-                ('O', PointsKey Box),
-                ('#', MaskKey Wall)
+            [   ('@', PointsIndex Robot),
+                ('O', PointsIndex Box),
+                ('#', MaskIndex Wall)
             ]
         
-        fromChar :: Char -> Maybe (WorldKey MaskObj PointsObj)
+        fromChar :: Char -> Maybe (MaskOrPointsIndex MaskObj PointsObj)
         fromChar = flip M.lookup fromCharMap
           where fromCharMap = M.fromList charAssoc
         
-        toChar :: WorldKey MaskObj PointsObj -> Char
+        toChar :: MaskOrPointsIndex MaskObj PointsObj -> Char
         toChar = fromMaybe 'I' . flip M.lookup toCharMap
           where toCharMap = M.fromList (map swap charAssoc)
         
@@ -63,11 +63,11 @@ main = do
         bgChar :: Char
         bgChar = '.'
         
-        nameZOrder :: WorldKey MaskObj PointsObj -> WorldKey MaskObj PointsObj -> Ordering
+        nameZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
         nameZOrder = compare
     
     -- print initWorld
-    -- printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder initWorld
+    -- printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) nameZOrder initWorld
     
     let instrChars = concat . lines $ instructionsStr
         instrs = map (:[]) instrChars
@@ -76,7 +76,7 @@ main = do
     -- putStrLn ""
     
     -- let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld v w):ws) [initWorld] vecs
-    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskKey) (toChar . PointsKey) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
     
     let resultingWorld = foldl' (\w v -> moveBotByVecInWorld v w) initWorld vecs
     
@@ -89,7 +89,7 @@ gpsOfAllBoxes world = map (gpsOfPoint w h) boxPoints
         h = wwHeight world
 
 moveBotByVecInWorld :: (Int, Int) -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
-moveBotByVecInWorld vec initWorld = case movePointsKeyByVecPushingPointsKeyBlockedByMaskKeysInWW Robot vec Box [Wall] initWorld of
+moveBotByVecInWorld vec initWorld = case movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW Robot vec Box [Wall] initWorld of
     Just w' -> w'
     Nothing -> initWorld
 
