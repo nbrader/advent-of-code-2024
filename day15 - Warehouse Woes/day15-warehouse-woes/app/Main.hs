@@ -49,17 +49,13 @@ main = do
                 ('#', MaskKey Wall)
             ]
         
-        fromCharMap :: M.Map Char (WorldKey MaskObj PointsObj)
-        fromCharMap = M.fromList charAssoc
-        
-        toCharMap :: M.Map (WorldKey MaskObj PointsObj) Char
-        toCharMap = M.fromList (map swap charAssoc)
-        
         fromChar :: Char -> Maybe (WorldKey MaskObj PointsObj)
         fromChar = flip M.lookup fromCharMap
+          where fromCharMap = M.fromList charAssoc
         
         toChar :: WorldKey MaskObj PointsObj -> Char
         toChar = fromMaybe 'I' . flip M.lookup toCharMap
+          where toCharMap = M.fromList (map swap charAssoc)
         
         initWorld :: WalkableWorld MaskObj PointsObj
         initWorld = readWorld fromChar worldStr
