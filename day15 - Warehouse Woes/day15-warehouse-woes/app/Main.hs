@@ -63,11 +63,11 @@ main = do
         bgChar :: Char
         bgChar = '.'
         
-        nameZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
-        nameZOrder = compare
+        indexZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
+        indexZOrder = compare
     
     -- print initWorld
-    -- printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) nameZOrder initWorld
+    -- printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder initWorld
     
     let instrChars = concat . lines $ instructionsStr
         instrs = map (:[]) instrChars
@@ -76,7 +76,7 @@ main = do
     -- putStrLn ""
     
     -- let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld v w):ws) [initWorld] vecs
-    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) nameZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
     
     let resultingWorld = foldl' (\w v -> moveBotByVecInWorld v w) initWorld vecs
     
