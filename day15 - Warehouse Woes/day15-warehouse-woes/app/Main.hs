@@ -109,7 +109,7 @@ day15part2 = do
     let [rawWorldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
         expandChar '@' = "@."
-        expandChar 'O' = "[."
+        expandChar 'O' = "[." -- I'll add the right sides of boxes as part of the rendering and assume it's existence in logic
         expandChar c = [c,c]
         
         worldStr = unlines . map (concatMap expandChar) . lines $ rawWorldStr
