@@ -104,7 +104,7 @@ moveVecFromChar '^' = (0,1)
 moveVecFromChar 'v' = (0,-1)
 
 day15part2 = do
-    contents <- readFile "input/day15 (data).csv"
+    contents <- readFile "input/day15 (example 3).csv"
     
     let [rawWorldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
@@ -139,7 +139,6 @@ day15part2 = do
         indexZOrder = compare
         
         printWorldPart2 w = do
-            print w
             printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder . addBoxRs $ w
           where addBoxRs :: WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
                 addBoxRs = movePointsOfIndexByInWW BoxR (1,0) . copyPointsInWW BoxL BoxR -- As mentioned in comment for 'expandChar', the right sides of boxes need to be added to rendering.
@@ -242,19 +241,21 @@ movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMo
                                 
                                 movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW pointsToBePushed v pushablePointsIndexLeft blockingMaskIndices world
                                     | any (`isCollidingWithMask` world) pushedPoints = Nothing  -- Collision detected, stop
-                                    | otherwise = let nextPushedPoints = concatMap (intersectionOfDoubleWidthPointsAndDoubleWidthPoints world) pushedPoints
-                                                  in Just $ adjustPointsInWW (pushedPoints ++) pushablePointsIndexLeft
-                                                          $ adjustPointsInWW (\initPushablePoints -> foldl' (\pushablePoints pointToBePushed -> delete pointToBePushed pushablePoints) initPushablePoints pointsToBePushed) pushablePointsIndexLeft
-                                                          $ world
+                                    | otherwise = let nextPointsToBePushed = concatMap (intersectionOfDoubleWidthPointsAndDoubleWidthPoints world) pushedPoints
+                                                      nextWorld = adjustPointsInWW (pushedPoints ++) pushablePointsIndexLeft
+                                                                $ adjustPointsInWW (\initPushablePoints -> foldl' (\pushablePoints pointToBePushed -> delete pointToBePushed pushablePoints) initPushablePoints pointsToBePushed) pushablePointsIndexLeft
+                                                                $ world
+                                                  in if null nextPointsToBePushed
+                                                      then Just $ adjustPointsInWW (\_ -> [pushingPointDestination]) toMovePointsIndex nextWorld
+                                                      else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPointsToBePushed v pushablePointsIndexLeft blockingMaskIndices nextWorld
                                   where pushedPoints = map (`movePoint` v) pointsToBePushed
                             in if pushingPointDestination `isCollidingWithMask` initWorld
                                 then Just initWorld
                                 else let worldWithPusherAdjusted = adjustPointsInWW (\_ -> [pushingPointDestination]) toMovePointsIndex initWorld
-                                         pushedPoint = toMovePoint
-                                         nextPushedPoints = firstDoubleWidthPointsPushed initWorld pushedPoint
-                                     in if null nextPushedPoints
+                                         nextPointsToBePushed = firstDoubleWidthPointsPushed initWorld pushingPointDestination
+                                     in if null nextPointsToBePushed
                                          then Just worldWithPusherAdjusted
-                                         else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPushedPoints v pushablePointsIndexLeft blockingMaskIndices worldWithPusherAdjusted
+                                         else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPointsToBePushed v pushablePointsIndexLeft blockingMaskIndices worldWithPusherAdjusted
                         
                         Just _  -> error "Points key must be associated with a single point!"
                         Nothing -> error "No such points key!"
