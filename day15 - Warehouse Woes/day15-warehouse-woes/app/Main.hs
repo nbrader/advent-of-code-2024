@@ -30,6 +30,7 @@ import Data.List
 import Data.List.Split
 import qualified Data.Map as M
 
+import Mask
 import AsciiWorld
 import WalkableWorld
 
@@ -101,7 +102,7 @@ moveVecFromChar '^' = (0,1)
 moveVecFromChar 'v' = (0,-1)
 
 day15part2 = do
-    contents <- readFile "input/day15 (example).csv"
+    contents <- readFile "input/day15 (data).csv"
     
     let [rawWorldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
@@ -115,7 +116,7 @@ day15part2 = do
         charAssoc =
             [   ('@', PointsIndex Robot),
                 ('[', PointsIndex BoxL),
-                (']', PointsIndex BoxR),
+                -- (']', PointsIndex BoxR),
                 ('#', MaskIndex Wall)
             ]
         
@@ -159,6 +160,82 @@ gpsOfAllBoxes2 world = map (gpsOfPoint2 w h) boxPoints
         h = wwHeight world
 
 moveBotByVecInWorld2 :: (Int, Int) -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
-moveBotByVecInWorld2 vec initWorld = case movePointsIndexByVecPushingPointsIndicesBlockedByMaskIndicesInWW Robot vec BoxL BoxR [Wall] initWorld of
+moveBotByVecInWorld2 vec initWorld = case movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW Robot vec BoxL BoxR [Wall] initWorld of
     Just w' -> w'
     Nothing -> initWorld
+
+movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW :: (Ord mk, Ord pk) => pk -> (Int, Int) -> pk -> [mk] -> WalkableWorld mk pk -> Maybe (WalkableWorld mk pk)
+movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW toMovePointsIndex v pushablePointsIndex blockingMaskIndices initWorld =
+    case (maybePushablePoints, maybeBlockingMaskIndices) of
+        (Just pushablePoints, Just blockingMasks) ->
+            if length pushablePoints /= length (nub pushablePoints)
+                then error "All pushable points must be unique!"
+                else case maybeToMovePointsIndex of 
+                        Just [toMovePoint] ->
+                            let
+                                pushingPointDestination = toMovePoint `movePoint` v
+                                
+                                collidesWithMask point world =
+                                    any (inWWIsPointOverlappingMaskIndex world point) blockingMaskIndices
+                                
+                                collidesWithPushable point world =
+                                    inWWIsPointOverlappingPointsIndex world point pushablePointsIndex
+                            
+                                movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW lastMovedPoint v pushablePointsIndex blockingMaskIndices world
+                                    | nextPoint `collidesWithMask` world = Nothing  -- Collision detected, stop
+                                    | nextPoint `collidesWithPushable` world = movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPoint v pushablePointsIndex blockingMaskIndices initWorld
+                                    | otherwise = Just  $ adjustPointsInWW (delete pushingPointDestination) pushablePointsIndex
+                                                        $ adjustPointsInWW (nextPoint:) pushablePointsIndex
+                                                        $ adjustPointsInWW (\_ -> [pushingPointDestination]) toMovePointsIndex
+                                                        $ world
+                                  where nextPoint = lastMovedPoint `movePoint` v
+                            in if pushingPointDestination `collidesWithMask` initWorld
+                                then Just initWorld
+                                else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW toMovePoint v pushablePointsIndex blockingMaskIndices initWorld
+                        
+                        Just _  -> error "Points key must be associated with a single point!"
+                        Nothing -> error "No such points key!"
+        _ -> error $ show (maybePushablePoints, maybeBlockingMaskIndices)
+  where
+    maybeToMovePointsIndex = lookupPointsInWW toMovePointsIndex initWorld
+    maybePushablePoints = lookupPointsInWW pushablePointsIndex initWorld
+    maybeBlockingMaskIndices = sequence $ map (\blockingMaskIndex -> lookupMaskInWW blockingMaskIndex initWorld) blockingMaskIndices
+
+
+movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW :: (Ord mk, Ord pk) => pk -> (Int, Int) -> pk -> pk -> [mk] -> WalkableWorld mk pk -> Maybe (WalkableWorld mk pk)
+movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMovePointsIndex v pushablePointsIndexLeft pushablePointsIndexRight blockingMaskIndices initWorld =
+    case (maybePushablePoints, maybeBlockingMaskIndices) of
+        (Just pushablePoints, Just blockingMasks) ->
+            if length pushablePoints /= length (nub pushablePoints)
+                then error "All pushable points must be unique!"
+                else case maybeToMovePointsIndex of 
+                        Just [toMovePoint] ->
+                            let
+                                pushingPointDestination = toMovePoint `movePoint` v
+                                
+                                collidesWithMask point world =
+                                    any (inWWIsPointOverlappingMaskIndex world point) blockingMaskIndices
+                                
+                                collidesWithPushable point world =
+                                    inWWIsPointOverlappingPointsIndex world point pushablePointsIndex
+                            
+                                movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW lastMovedPoint v pushablePointsIndex blockingMaskIndices world
+                                    | nextPoint `collidesWithMask` world = Nothing  -- Collision detected, stop
+                                    | nextPoint `collidesWithPushable` world = movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPoint v pushablePointsIndex blockingMaskIndices initWorld
+                                    | otherwise = Just  $ adjustPointsInWW (delete pushingPointDestination) pushablePointsIndex
+                                                        $ adjustPointsInWW (nextPoint:) pushablePointsIndex
+                                                        $ adjustPointsInWW (\_ -> [pushingPointDestination]) toMovePointsIndex
+                                                        $ world
+                                  where nextPoint = lastMovedPoint `movePoint` v
+                            in if pushingPointDestination `collidesWithMask` initWorld
+                                then Just initWorld
+                                else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW toMovePoint v pushablePointsIndex blockingMaskIndices initWorld
+                        
+                        Just _  -> error "Points key must be associated with a single point!"
+                        Nothing -> error "No such points key!"
+        _ -> error $ show (maybePushablePoints, maybeBlockingMaskIndices)
+  where
+    pushablePointsIndex = pushablePointsIndexLeft -- Temporary bodge
+    maybeToMovePointsIndex = lookupPointsInWW toMovePointsIndex initWorld
+    maybePushablePoints = lookupPointsInWW pushablePointsIndex initWorld
+    maybeBlockingMaskIndices = sequence $ map (\blockingMaskIndex -> lookupMaskInWW blockingMaskIndex initWorld) blockingMaskIndices
