@@ -117,7 +117,7 @@ day15part2 = do
         charAssoc :: [(Char, MaskOrPointsIndex MaskObj PointsObj)]
         charAssoc =
             [   ('@', PointsIndex Robot),
-                ('[', PointsIndex BoxL),
+                ('[', PointsIndex BoxL), -- As mentioned in comment for 'expandChar', I only added the right sides of boxes to the input string.
                 ('#', MaskIndex Wall)
             ]
         
@@ -127,7 +127,7 @@ day15part2 = do
         
         toChar :: MaskOrPointsIndex MaskObj PointsObj -> Char
         toChar = fromMaybe 'I' . flip M.lookup toCharMap
-          where toCharMap = M.insert (PointsIndex BoxR) ']' $ M.fromList (map swap charAssoc)
+          where toCharMap = M.insert (PointsIndex BoxR) ']' $ M.fromList (map swap charAssoc) -- As mentioned in comment for 'expandChar', the right sides of boxes need to be added to rendering.
         
         initWorld :: WalkableWorld MaskObj PointsObj
         initWorld = readWorld fromChar worldStr
@@ -140,7 +140,7 @@ day15part2 = do
         
         printWorldPart2 = printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder . addBoxRs
           where addBoxRs :: WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
-                addBoxRs = movePointsOfIndexByInWW BoxR (1,0) . copyPointsInWW BoxL BoxR
+                addBoxRs = movePointsOfIndexByInWW BoxR (1,0) . copyPointsInWW BoxL BoxR -- As mentioned in comment for 'expandChar', the right sides of boxes need to be added to rendering.
     
     -- print initWorld
     -- printWorldPart2 initWorld
