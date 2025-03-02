@@ -34,10 +34,12 @@ import AsciiWorld
 import WalkableWorld
 
 data MaskObj   = Wall        deriving (Show, Eq, Ord)
-data PointsObj = Robot | Box deriving (Show, Eq, Ord)
+data PointsObj = Robot | Box | BoxL | BoxR deriving (Show, Eq, Ord)
 
 main :: IO ()
-main = do
+main = day15part2
+
+day15part1 = do
     contents <- readFile "input/day15 (data).csv"
     
     let [worldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
@@ -97,3 +99,66 @@ moveVecFromChar '>' = (1,0)
 moveVecFromChar '<' = (-1,0)
 moveVecFromChar '^' = (0,1)
 moveVecFromChar 'v' = (0,-1)
+
+day15part2 = do
+    contents <- readFile "input/day15 (example).csv"
+    
+    let [rawWorldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
+        
+        expandChar '@' = "@."
+        expandChar 'O' = "[]"
+        expandChar c = [c,c]
+        
+        worldStr = unlines . map (concatMap expandChar) . lines $ rawWorldStr
+        
+        charAssoc :: [(Char, MaskOrPointsIndex MaskObj PointsObj)]
+        charAssoc =
+            [   ('@', PointsIndex Robot),
+                ('[', PointsIndex BoxL),
+                (']', PointsIndex BoxR),
+                ('#', MaskIndex Wall)
+            ]
+        
+        fromChar :: Char -> Maybe (MaskOrPointsIndex MaskObj PointsObj)
+        fromChar = flip M.lookup fromCharMap
+          where fromCharMap = M.fromList charAssoc
+        
+        toChar :: MaskOrPointsIndex MaskObj PointsObj -> Char
+        toChar = fromMaybe 'I' . flip M.lookup toCharMap
+          where toCharMap = M.fromList (map swap charAssoc)
+        
+        initWorld :: WalkableWorld MaskObj PointsObj
+        initWorld = readWorld fromChar worldStr
+        
+        bgChar :: Char
+        bgChar = '.'
+        
+        indexZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
+        indexZOrder = compare
+    
+    -- print initWorld
+    -- printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder initWorld
+    
+    let instrChars = concat . lines $ instructionsStr
+        instrs = map (:[]) instrChars
+        vecs = map moveVecFromChar instrChars
+    -- putStrLn instrChars
+    -- putStrLn ""
+    
+    let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld2 v w):ws) [initWorld] vecs
+    mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    
+    let resultingWorld = foldl' (\w v -> moveBotByVecInWorld2 v w) initWorld vecs
+    
+    print $ sum $ gpsOfAllBoxes2 resultingWorld
+
+gpsOfPoint2 width height (x,y) = x + 100 * (height - 1 - y)
+gpsOfAllBoxes2 world = map (gpsOfPoint2 w h) boxPoints
+  where (Just boxPoints) = lookupPointsInWW BoxL world
+        w = wwWidth world
+        h = wwHeight world
+
+moveBotByVecInWorld2 :: (Int, Int) -> WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
+moveBotByVecInWorld2 vec initWorld = case movePointsIndexByVecPushingPointsIndicesBlockedByMaskIndicesInWW Robot vec BoxL BoxR [Wall] initWorld of
+    Just w' -> w'
+    Nothing -> initWorld
