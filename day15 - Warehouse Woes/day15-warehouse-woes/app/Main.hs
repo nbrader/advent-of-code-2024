@@ -68,9 +68,11 @@ day15part1 = do
         
         indexZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
         indexZOrder = compare
+        
+        printWorldPart1 = printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder
     
     -- print initWorld
-    -- printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder initWorld
+    -- printWorldPart1 initWorld
     
     let instrChars = concat . lines $ instructionsStr
         instrs = map (:[]) instrChars
@@ -79,7 +81,7 @@ day15part1 = do
     -- putStrLn ""
     
     -- let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld v w):ws) [initWorld] vecs
-    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorldPart1 world) $ zip instrs (drop 1 $ reverse resultingWorlds)
     
     let resultingWorld = foldl' (\w v -> moveBotByVecInWorld v w) initWorld vecs
     
@@ -107,7 +109,7 @@ day15part2 = do
     let [rawWorldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
         expandChar '@' = "@."
-        expandChar 'O' = "[]"
+        expandChar 'O' = "[."
         expandChar c = [c,c]
         
         worldStr = unlines . map (concatMap expandChar) . lines $ rawWorldStr
@@ -116,7 +118,6 @@ day15part2 = do
         charAssoc =
             [   ('@', PointsIndex Robot),
                 ('[', PointsIndex BoxL),
-                -- (']', PointsIndex BoxR),
                 ('#', MaskIndex Wall)
             ]
         
@@ -126,7 +127,7 @@ day15part2 = do
         
         toChar :: MaskOrPointsIndex MaskObj PointsObj -> Char
         toChar = fromMaybe 'I' . flip M.lookup toCharMap
-          where toCharMap = M.fromList (map swap charAssoc)
+          where toCharMap = M.insert (PointsIndex BoxR) ']' $ M.fromList (map swap charAssoc)
         
         initWorld :: WalkableWorld MaskObj PointsObj
         initWorld = readWorld fromChar worldStr
@@ -136,9 +137,13 @@ day15part2 = do
         
         indexZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
         indexZOrder = compare
+        
+        printWorldPart2 = printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder . addBoxRs
+          where addBoxRs :: WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
+                addBoxRs = movePointsOfIndexByInWW BoxR (1,0) . copyPointsInWW BoxL BoxR
     
     -- print initWorld
-    -- printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder initWorld
+    -- printWorldPart2 initWorld
     
     let instrChars = concat . lines $ instructionsStr
         instrs = map (:[]) instrChars
@@ -147,7 +152,7 @@ day15part2 = do
     -- putStrLn ""
     
     let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld2 v w):ws) [initWorld] vecs
-    mapM_ (\(instr, world) -> putStrLn instr >> printWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    mapM_ (\(instr, world) -> putStrLn instr >> printWorldPart2 world) $ zip instrs (drop 1 $ reverse resultingWorlds)
     
     let resultingWorld = foldl' (\w v -> moveBotByVecInWorld2 v w) initWorld vecs
     
