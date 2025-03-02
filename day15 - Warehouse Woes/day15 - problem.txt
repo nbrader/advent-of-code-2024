@@ -236,8 +236,6 @@ Predict the motion of the robot and boxes in the warehouse. After the robot is f
 
 Your puzzle answer was 1451928.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 --- Part Two ---
 The lanternfish use your information to find a safe moment to swim in and turn off the malfunctioning robot! Just as they start preparing a festival in your honor, reports start coming in that a second warehouse's robot is also malfunctioning.
 
@@ -404,9 +402,12 @@ The sum of these boxes' GPS coordinates is 9021.
 
 Predict the motion of the robot and boxes in this new, scaled-up warehouse. What is the sum of all boxes' final GPS coordinates?
 
-Answer: 
- 
+Your puzzle answer was 1462788.
 
-Although it hasn't changed, you can still get your puzzle input.
+Both parts of this puzzle are complete! They provide two gold stars: **
+
+At this point, you should return to your Advent calendar and try another puzzle.
+
+If you still want to see it, you can get your puzzle input.
 
 You can also [Share] this puzzle.

@@ -18,7 +18,7 @@
 -- 1451928
 
 -- *Main> day15part2
--- 
+-- 1462788
 
 module Main (main) where
 
@@ -271,9 +271,9 @@ movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMo
                                 
                                 movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW pointsToBePushed v pushablePointsIndexLeft blockingMaskIndices world
                                     | any (`isDoubleWidthPointsCollidingWithMask` world) pushedPoints = Nothing  -- Collision detected, stop
-                                    | otherwise = let nextPointsToBePushed = concatMap (intersectionOfDoubleWidthPointsAndDoubleWidthPoints world) pushedPoints
-                                                      nextWorld = adjustPointsInWW (pushedPoints ++) pushablePointsIndexLeft
-                                                                $ adjustPointsInWW (\initPushablePoints -> foldl' (\pushablePoints pointToBePushed -> delete pointToBePushed pushablePoints) initPushablePoints pointsToBePushed) pushablePointsIndexLeft
+                                    | otherwise = let nextPointsToBePushed = nub $ concatMap (intersectionOfDoubleWidthPointsAndDoubleWidthPoints world) pushedPoints
+                                                      nextWorld = adjustPointsInWW (\initPushablePoints -> foldl' (\pushablePoints pointToBePushed -> delete pointToBePushed pushablePoints) initPushablePoints pointsToBePushed) pushablePointsIndexLeft
+                                                                $ adjustPointsInWW (pushedPoints ++) pushablePointsIndexLeft
                                                                 $ world
                                                   in if null nextPointsToBePushed
                                                       then Just $ adjustPointsInWW (\_ -> [pushingPointDestination]) toMovePointsIndex nextWorld
