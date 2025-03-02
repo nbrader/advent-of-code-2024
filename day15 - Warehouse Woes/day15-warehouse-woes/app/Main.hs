@@ -104,7 +104,7 @@ moveVecFromChar '^' = (0,1)
 moveVecFromChar 'v' = (0,-1)
 
 day15part2 = do
-    contents <- readFile "input/day15 (example 3).csv"
+    contents <- readFile "input/day15 (data).csv"
     
     let [rawWorldStr,instructionsStr] = map unlines . splitOn [[]] . lines $ contents
         
@@ -221,6 +221,9 @@ movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMo
                                 isCollidingWithMask point world =
                                     any (inWWIsPointOverlappingMaskIndex world point) blockingMaskIndices
                                 
+                                isDoubleWidthPointsCollidingWithMask point world =
+                                    any (\blockingMaskIndex -> inWWIsPointOverlappingMaskIndex world point blockingMaskIndex || inWWIsPointOverlappingMaskIndex world (point `movePoint` (1,0)) blockingMaskIndex) blockingMaskIndices
+                                
                                 firstDoubleWidthPointsPushed world point =
                                     [p | p <- ps, inWWIsPointOverlappingPointsIndex world p pushablePointsIndexLeft]
                                   where isLeftPush  = v == (-1,0)
@@ -237,10 +240,10 @@ movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMo
                                         
                                         ps | isLeftPush  = [point `movePoint` (-1,0)]
                                            | isRightPush = [point `movePoint` (1,0)]
-                                           | otherwise   = [point `movePoint` (-1,0), point]
+                                           | otherwise   = [point `movePoint` (-1,0), point, point `movePoint` (1,0)]
                                 
                                 movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW pointsToBePushed v pushablePointsIndexLeft blockingMaskIndices world
-                                    | any (`isCollidingWithMask` world) pushedPoints = Nothing  -- Collision detected, stop
+                                    | any (`isDoubleWidthPointsCollidingWithMask` world) pushedPoints = Nothing  -- Collision detected, stop
                                     | otherwise = let nextPointsToBePushed = concatMap (intersectionOfDoubleWidthPointsAndDoubleWidthPoints world) pushedPoints
                                                       nextWorld = adjustPointsInWW (pushedPoints ++) pushablePointsIndexLeft
                                                                 $ adjustPointsInWW (\initPushablePoints -> foldl' (\pushablePoints pointToBePushed -> delete pointToBePushed pushablePoints) initPushablePoints pointsToBePushed) pushablePointsIndexLeft
