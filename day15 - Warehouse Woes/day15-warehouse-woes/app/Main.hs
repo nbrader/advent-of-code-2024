@@ -143,6 +143,7 @@ day15part2 = do
           where addBoxRs :: WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
                 addBoxRs = movePointsOfIndexByInWW BoxR (1,0) . copyPointsInWW BoxL BoxR -- As mentioned in comment for 'expandChar', the right sides of boxes need to be added to rendering.
     
+    print initWorld
     printWorldPart2 initWorld
     
     let instrChars = concat . lines $ instructionsStr
@@ -151,11 +152,12 @@ day15part2 = do
     -- putStrLn instrChars
     -- putStrLn ""
     
-    let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld2 v w):ws) [initWorld] vecs
-    mapM_ (\(instr, world) -> putStrLn instr >> printWorldPart2 world) $ zip instrs (drop 1 $ reverse resultingWorlds)
+    -- let resultingWorlds = foldl' (\ws@(w:_) v -> (moveBotByVecInWorld2 v w):ws) [initWorld] vecs
+    -- mapM_ (\(instr, world) -> putStrLn instr >> printWorldPart2 world) $ zip instrs (drop 1 $ reverse resultingWorlds)
     
     let resultingWorld = foldl' (\w v -> moveBotByVecInWorld2 v w) initWorld vecs
     
+    printWorldPart2 resultingWorld
     print $ sum $ gpsOfAllBoxes2 resultingWorld
 
 gpsOfPoint2 width height (x,y) = x + 100 * (height - 1 - y)
@@ -169,7 +171,7 @@ moveBotByVecInWorld2 vec initWorld = case movePointsIndexByVecPushingDoubleWidth
     Just w' -> w'
     Nothing -> initWorld
 
-movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW :: (Ord mk, Ord pk) => pk -> (Int, Int) -> pk -> [mk] -> WalkableWorld mk pk -> Maybe (WalkableWorld mk pk)
+movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW :: PointsObj -> (Int, Int) -> PointsObj -> [MaskObj] -> WalkableWorld MaskObj PointsObj -> Maybe (WalkableWorld MaskObj PointsObj)
 movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW toMovePointsIndex v pushablePointsIndex blockingMaskIndices initWorld =
     case (maybePushablePoints, maybeBlockingMaskIndices) of
         (Just pushablePoints, Just blockingMasks) ->
@@ -205,14 +207,39 @@ movePointsIndexByVecPushingPointsIndexBlockedByMaskIndicesInWW toMovePointsIndex
     maybeToMovePointsIndex = lookupPointsInWW toMovePointsIndex initWorld
     maybePushablePoints = lookupPointsInWW pushablePointsIndex initWorld
     maybeBlockingMaskIndices = sequence $ map (\blockingMaskIndex -> lookupMaskInWW blockingMaskIndex initWorld) blockingMaskIndices
+    
+charAssoc :: [(Char, MaskOrPointsIndex MaskObj PointsObj)]
+charAssoc =
+    [   ('@', PointsIndex Robot),
+        ('[', PointsIndex BoxL), -- As mentioned in comment for 'expandChar', I only added the right sides of boxes to the input string.
+        ('#', MaskIndex Wall)
+    ]
 
+fromChar :: Char -> Maybe (MaskOrPointsIndex MaskObj PointsObj)
+fromChar = flip M.lookup fromCharMap
+  where fromCharMap = M.fromList charAssoc
 
-movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW :: (Ord mk, Ord pk) => pk -> (Int, Int) -> pk -> [mk] -> WalkableWorld mk pk -> Maybe (WalkableWorld mk pk)
+toChar :: MaskOrPointsIndex MaskObj PointsObj -> Char
+toChar = fromMaybe 'I' . flip M.lookup toCharMap
+  where toCharMap = M.insert (PointsIndex BoxR) ']' $ M.fromList (map swap charAssoc) -- As mentioned in comment for 'expandChar', the right sides of boxes need to be added to rendering.
+
+bgChar :: Char
+bgChar = '.'
+
+indexZOrder :: MaskOrPointsIndex MaskObj PointsObj -> MaskOrPointsIndex MaskObj PointsObj -> Ordering
+indexZOrder = compare
+
+showWorldPart2 :: WalkableWorld MaskObj PointsObj -> String
+showWorldPart2 w = showWorld bgChar (toChar . MaskIndex) (toChar . PointsIndex) indexZOrder . addBoxRs $ w
+  where addBoxRs :: WalkableWorld MaskObj PointsObj -> WalkableWorld MaskObj PointsObj
+        addBoxRs = movePointsOfIndexByInWW BoxR (1,0) . copyPointsInWW BoxL BoxR -- As mentioned in comment for 'expandChar', the right sides of boxes need to be added to rendering.
+
+movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW :: PointsObj -> (Int, Int) -> PointsObj -> [MaskObj] -> WalkableWorld MaskObj PointsObj -> Maybe (WalkableWorld MaskObj PointsObj)
 movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMovePointsIndex v pushablePointsIndexLeft blockingMaskIndices initWorld =
     case (maybePushablePointsIndexLeft, maybeBlockingMaskIndices) of
         (Just pushablePoints, Just blockingMasks) ->
             if length pushablePoints /= length (nub pushablePoints)
-                then error "All pushable points must be unique!"
+                then error ("All pushable points must be unique!\n" ++ show initWorld ++ "\n" ++ showWorldPart2 initWorld)
                 else case maybeToMovePointsIndex of 
                         Just [toMovePoint] ->
                             let
@@ -258,7 +285,7 @@ movePointsIndexByVecPushingDoubleWidthPointsIndicesBlockedByMaskIndicesInWW toMo
                                          nextPointsToBePushed = firstDoubleWidthPointsPushed initWorld pushingPointDestination
                                      in if null nextPointsToBePushed
                                          then Just worldWithPusherAdjusted
-                                         else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPointsToBePushed v pushablePointsIndexLeft blockingMaskIndices worldWithPusherAdjusted
+                                         else movePointByVecPushingPointsIndexBlockedByMaskIndicesInWW nextPointsToBePushed v pushablePointsIndexLeft blockingMaskIndices initWorld
                         
                         Just _  -> error "Points key must be associated with a single point!"
                         Nothing -> error "No such points key!"
